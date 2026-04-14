@@ -1,15 +1,17 @@
-name: Flask CI + Email Alert
+name: Run Flask and Save Output
 
 on:
   push:
 
 jobs:
-  test-and-notify:
+  run-and-save:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -24,33 +26,16 @@ jobs:
           python app.py &
           sleep 5
 
-      - name: Test endpoint
-        id: test
+      - name: Call API and save output
         run: |
-          curl -f http://127.0.0.1:5000 && echo "status=success" >> $GITHUB_OUTPUT
+          mkdir -p results
+          curl http://127.0.0.1:5000 > results/${{ github.sha }}.txt
 
-      - name: Send Email (Success)
-        if: success()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "✅ Flask App Success"
-          body: "Your Flask app ran successfully on commit ${{ github.sha }}"
-          to: your-email@gmail.com
-          from: GitHub Actions
+      - name: Commit and push result
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
 
-      - name: Send Email (Failure)
-        if: failure()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "❌ Flask App Failed"
-          body: "Flask app failed on commit ${{ github.sha }}"
-          to: your-email@gmail.com
-          from: GitHub Actions
+          git add results/
+          git diff --cached --quiet || git commit -m "Add result for ${{ github.sha }} [skip ci]"
+          git push

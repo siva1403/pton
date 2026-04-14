@@ -36,8 +36,8 @@ jobs:
 
       - name: Commit and push result
         run: |
-          git config user.name "siva1403"
-          git config user.email "k.s.krishnajob@gmail.com"
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions@github.com"
 
           git add results/
           git diff --cached --quiet || git commit -m "Add result for ${{ github.sha }} [skip ci]"

@@ -12,7 +12,7 @@ def home():
         "branch": os.getenv("GITHUB_REF_NAME"),
         "commit_id": os.getenv("GITHUB_SHA"),
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S IST"),
-        "message": "Flask app is running"
+        "message": "Flask app is runnig"
     }
     return jsonify(data)
 

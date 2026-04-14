@@ -3,6 +3,9 @@ name: Run Flask and Save Output
 on:
   push:
 
+permissions:
+  contents: write
+
 jobs:
   run-and-save:
     runs-on: ubuntu-latest

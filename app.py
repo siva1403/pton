@@ -4,7 +4,7 @@ import smtplib
 
 data = json.loads(sys.argv[1])
 
-subject = "⚠️ GitHub PR Bypass Alert"
+subject = "⚠️ GitHub PR Bypass Alerst"
 body = f"""
 User {data['user']} merged PR #{data['pr']} without required approvals.
 """

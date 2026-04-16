@@ -1,44 +1,45 @@
-name: Run Flask and Save Output
+name: PR Bypass Alert
 
 on:
-  push:
-
-permissions:
-  contents: write
+  pull_request:
+    types: [closed]
 
 jobs:
-  run-and-save:
+  detect-bypass:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - name: Check PR conditions
+        uses: actions/github-script@v7
+        id: check
         with:
-          persist-credentials: true
+          script: |
+            const pr = context.payload.pull_request;
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+            if (!pr.merged) {
+              return { bypass: false };
+            }
 
-      - name: Install dependencies
-        run: pip install flask requests
+            const reviews = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number
+            });
 
-      - name: Run Flask app
+            const approvals = reviews.data.filter(r => r.state === "APPROVED");
+
+            // Example rule: require at least 1 approval
+            if (approvals.length === 0) {
+              return {
+                bypass: true,
+                user: pr.merged_by.login,
+                pr: pr.number
+              };
+            }
+
+            return { bypass: false };
+
+      - name: Send email if bypass detected
+        if: steps.check.outputs.result.bypass == true
         run: |
-          python app.py &
-          sleep 5
-
-      - name: Call API and save output
-        run: |
-          mkdir -p results
-          curl http://127.0.0.1:5000 > results/${{ github.sha }}.txt
-
-      - name: Commit and push result
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "github-actions@github.com"
-
-          git add results/
-          git diff --cached --quiet || git commit -m "Add result for ${{ github.sha }} [skip ci]"
-          git push
+          python send_email.py '${{ steps.check.outputs.result }}'

@@ -11,7 +11,7 @@ title = sys.argv[4]
 log_file = "audit/bypass-log.jsonl"
 os.makedirs("audit", exist_ok=True)
 
-# --- Your rules (customize here) ---
+# --- Your vrules (customize here) ---
 # Example rule: flag ALL merges as suspicious OR extend with API checks later
 bypass_detected = True
 

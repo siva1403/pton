@@ -1,0 +1,43 @@
+{
+  "code_scan": {
+    "findings": [
+      {
+        "file": "app.py",
+        "issue": "Hardcoded secret detected",
+        "line": 12,
+        "severity": "high"
+      },
+      {
+        "file": "utils.py",
+        "issue": "Unused import",
+        "line": 45,
+        "severity": "medium"
+      }
+    ],
+    "status": "completed",
+    "summary": {
+      "critical": 0,
+      "high": 1,
+      "issues_found": 3,
+      "low": 1,
+      "medium": 1,
+      "total_files_scanned": 25
+    },
+    "tool": "basic-scan"
+  },
+  "message": "Flask app is running",
+  "repository": {
+    "branch": "master",
+    "commit_id": "2f1dbd8874508ca3f7861dccad49062de09a6e4c",
+    "name": "siva1403/pton"
+  },
+  "runtime": {
+    "environment": "production",
+    "timestamp_utc": "2026-04-14T09:50:22.321732+00:00"
+  },
+  "service": {
+    "name": "Flask App",
+    "version": "1.0.0"
+  },
+  "status": "success"
+}

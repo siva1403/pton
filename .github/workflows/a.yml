@@ -1,23 +1,27 @@
-name: PR Bypass Alert
+name: Bypass Audit Logger
 
 on:
   pull_request:
     types: [closed]
+
+permissions:
+  contents: write
+
 jobs:
-  detect-bypass:
+  audit:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check PR conditions
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Detect violation
+        id: detect
         uses: actions/github-script@v7
-        id: check
         with:
           script: |
             const pr = context.payload.pull_request;
-
-            if (!pr.merged) {
-              return { bypass: false };
-            }
 
             const reviews = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
@@ -27,18 +31,31 @@ jobs:
 
             const approvals = reviews.data.filter(r => r.state === "APPROVED");
 
-            // Example rule: require at least 1 approval
-            if (approvals.length === 0) {
-              return {
-                bypass: true,
-                user: pr.merged_by.login,
-                pr: pr.number
-              };
-            }
+            // Define your rule (customize this)
+            const bypass = approvals.length === 0;
 
-            return { bypass: false };
+            return {
+              bypass,
+              user: pr.merged_by.login,
+              pr: pr.number,
+              time: new Date().toISOString(),
+              branch: pr.base.ref,
+              title: pr.title
+            };
 
-      - name: Send email if bypass detected
-        if: steps.check.outputs.result.bypass == true
+      - name: Append audit log
+        if: fromJSON(steps.detect.outputs.result).bypass == true
         run: |
-          python send_email.py '${{ steps.check.outputs.result }}'
+          mkdir -p audit
+
+          echo '${{ steps.detect.outputs.result }}' >> audit/bypass-log.jsonl
+
+      - name: Commit audit log
+        if: fromJSON(steps.detect.outputs.result).bypass == true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add audit/bypass-log.jsonl
+          git commit -m "chore: add bypass audit log [skip ci]" || exit 0
+          git push

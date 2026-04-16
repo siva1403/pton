@@ -6,7 +6,7 @@ data = json.loads(sys.argv[1])
 
 subject = "⚠️ GitHub PR Bypass Alerst"
 body = f"""
-User {data['user']} merged PR #{data['pr']} without required approvals.
+User {data['user']} merged PR #{data['pr']} without required approval.
 """
 
 sender = "your@email.com"

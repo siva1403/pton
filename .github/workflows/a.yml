@@ -16,46 +16,24 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Detect violation
-        id: detect
-        uses: actions/github-script@v7
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          script: |
-            const pr = context.payload.pull_request;
+          python-version: "3.11"
 
-            const reviews = await github.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pr.number
-            });
-
-            const approvals = reviews.data.filter(r => r.state === "APPROVED");
-
-            // Define your rule (customize this)
-            const bypass = approvals.length === 0;
-
-            return {
-              bypass,
-              user: pr.merged_by.login,
-              pr: pr.number,
-              time: new Date().toISOString(),
-              branch: pr.base.ref,
-              title: pr.title
-            };
-
-      - name: Append audit log
-        if: fromJSON(steps.detect.outputs.result).bypass == true
+      - name: Run audit script
         run: |
-          mkdir -p audit
-
-          echo '${{ steps.detect.outputs.result }}' >> audit/bypass-log.jsonl
+          python scripts/audit_logger.py \
+            "${{ github.event.pull_request.number }}" \
+            "${{ github.event.pull_request.merged_by.login }}" \
+            "${{ github.event.pull_request.base.ref }}" \
+            "${{ github.event.pull_request.title }}"
 
       - name: Commit audit log
-        if: fromJSON(steps.detect.outputs.result).bypass == true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add audit/bypass-log.jsonl
-          git commit -m "chore: add bypass audit log [skip ci]" || exit 0
+          git commit -m "chore: update audit log" || exit 0
           git push

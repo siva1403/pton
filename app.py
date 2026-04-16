@@ -27,4 +27,4 @@ record = {
 with open(log_file, "a") as f:
     f.write(json.dumps(record) + "\n")
 
-print("Audits record written:", record)
+print("Audit record written:", record)

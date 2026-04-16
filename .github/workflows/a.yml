@@ -1,9 +1,9 @@
 name: PR Bypass Alert
 
 on:
-  pull_request:
-    types: [closed]
-
+  push:
+    branches:
+      - main
 jobs:
   detect-bypass:
     runs-on: ubuntu-latest

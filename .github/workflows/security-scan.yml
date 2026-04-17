@@ -1,0 +1,63 @@
+name: Security Scan Pipeline
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 🐍 Python setup
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt || true
+          pip install bandit safety
+
+      # 🔍 Python SAST (Bandit)
+      - name: Run Bandit Scan
+        run: |
+          bandit -r . -ll
+          
+      # 📦 Dependency vulnerability scan
+      - name: Run Safety Scan
+        run: |
+          safety check
+
+      # 🔐 Secret scanning
+      - name: TruffleHog Scan
+        uses: trufflesecurity/trufflehog@v3
+
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3

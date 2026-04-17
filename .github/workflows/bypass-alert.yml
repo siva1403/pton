@@ -1,0 +1,27 @@
+name: Bypass Detection
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  detect-bypass:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check commit source
+        run: |
+          echo "Checking commit..."
+
+          if [[ "${{ github.event.head_commit.message }}" == *"[skip-scan]"* ]]; then
+            echo "⚠️ Possible scan bypass detected!"
+            exit 1
+          fi
+
+      - name: Detect force push
+        run: |
+          if [[ "${{ github.event.forced }}" == "true" ]]; then
+            echo "🚨 Force push detected!"
+            exit 1
+          fi
